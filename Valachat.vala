@@ -32,18 +32,20 @@ public class Valachat : GLib.Object {
     endwin();
     initscr();
     start_color();
-    init_pair(1, Color.GREEN, Color.RED);
-    messages = new Window (LINES - 3, COLS - 2, 1, 1);
+    init_pair(1, Color.GREEN, Color.BLACK);
+    messages = new Window (LINES - 4, COLS - 2, 1, 1);
     messages.bkgdset (COLOR_PAIR (1) | Attribute.BOLD);  // set background
     //messages.addstr ("Hello world!\n");   // write string
     messages.clrtobot ();               // clear to bottom (does not move cursor)
     messages.scrollok(true);
 
-    input = new Window(1, COLS - 2, LINES - 1, 1);
+    input = new Window(3, COLS - 2, LINES - 3, 1);
     input.bkgdset(COLOR_PAIR(1) | Attribute.BOLD);
-    input.addstr("Msg:");
-    input.clrtobot();               // read a characterw EOFException();
-    input.scrollok(true);
+    input.border(' ', ' ', '-', ' ', ' ', ' ', ' ', ' ');
+    Valachat.input.move(1,1);
+    Valachat.input.clrtoeol();
+    Valachat.input.box(0, 0);
+    Valachat.input.addstr("Msg: ");
 
     renderer = new RenderThread("mainRenderer");
     //Thread<void*> renderThread = new Thread<void*>.try("renderer", renderer.render);
@@ -90,6 +92,7 @@ public class Valachat : GLib.Object {
 
   }
 
+  //Not used - might be implemented in future
   public static void clientEvent(SocketClientEvent event, SocketConnectable connectable, IOStream connection) {
     if (event == SocketClientEvent.RESOLVING) {
       messageList.add(new Message("Client", "Resolving..."));
@@ -112,7 +115,7 @@ public class Valachat : GLib.Object {
 
   public void processMsg(string line) {
     Valachat.input.clrtobot();
-    Valachat.input.addstr("Msg: ");
+    Valachat.input.addstr("|Msg: ");
     if (line.has_prefix("/")) {
       string[] args = new string[line.split(" ").length-1];
       for (int i = 1; i < line.split(" ").length; i++) {
@@ -152,6 +155,7 @@ public class RenderThread : GLib.Object {
     }
     Valachat.messages.clrtobot();
     Valachat.messages.refresh();
+    Valachat.input.box('|', '-');
     Valachat.input.refresh();
   }
 
@@ -170,6 +174,10 @@ private class KeyListener : GLib.Object {
       string buffer = "";
       Valachat.input.getstr(buffer);
       if (buffer != "") readLine(buffer);
+      Valachat.input.move(1,1);
+      Valachat.input.clrtoeol();
+      Valachat.input.box(0, 0);
+      Valachat.input.addstr("Msg: ");
     }
   }
 
