@@ -7,10 +7,13 @@ public class Valachat : GLib.Object {
 
   public static Window input;
   public static Window messages;
-  private RenderThread renderer;
+  public static RenderThread renderer;
   private static string username = "Anon";
+  public static Thread<void*> keyThread;
 
   public static ArrayList<Message> messageList;
+
+  public static NetworkHandler nHandler;
 
   // Command stuff
   private HashMap<string,Command> commands;
@@ -39,12 +42,13 @@ public class Valachat : GLib.Object {
     input = new Window(1, COLS - 2, LINES - 1, 1);
     input.bkgdset(COLOR_PAIR(1) | Attribute.BOLD);
     input.addstr("Msg:");
-    input.clrtobot();               // read a character
+    input.clrtobot();               // read a characterw EOFException();
+    input.scrollok(true);
 
     renderer = new RenderThread("mainRenderer");
     //Thread<void*> renderThread = new Thread<void*>.try("renderer", renderer.render);
     var keyListener = new KeyListener();
-    Thread<void*> keyThread = new Thread<void*>.try("keyListener", keyListener.listenerLoop);
+    keyThread = new Thread<void*>.try("keyListener", keyListener.listenerLoop);
     keyListener.readLine.connect(processMsg);
 
     Valachat.input.redrawwin();
@@ -59,10 +63,51 @@ public class Valachat : GLib.Object {
 
   private void registerCommands() {
     commands.set("nick", (args) => (Valachat.setNick(args)));
+    commands.set("connect", (args) => (Valachat.connect(args)));
+    commands.set("quit", (args) => (Valachat.exit(args)));
+    commands.set("exit", (args) => (Valachat.exit(args)));
+  }
+
+  public static void exit(string[] args) {
+    keyThread.exit(null);
+    endwin();
   }
 
   public static void setNick(string[] args) {
     username = args[0];
+  }
+
+  public static void connect(string[] args) {
+    stderr.printf("Trying to connect!\n");
+    messageList.add(new Message("Client", "Connecting..."));
+    renderer.render();
+    nHandler = new NetworkHandler(args[0]);
+    stderr.printf("Created nHandler\n");
+    Thread<void*> nListener = new Thread<void*>.try("nHandler", nHandler.networkListener);
+    nHandler.recievedMessage.connect(handleMessage);
+    messageList.add(new Message("Client", "Connected"));
+    renderer.render();
+
+  }
+
+  public static void clientEvent(SocketClientEvent event, SocketConnectable connectable, IOStream connection) {
+    if (event == SocketClientEvent.RESOLVING) {
+      messageList.add(new Message("Client", "Resolving..."));
+    } else if (event == SocketClientEvent.RESOLVED) {
+      messageList.add(new Message("Client", "Resolved!"));
+    } else if (event == SocketClientEvent.CONNECTING) {
+      messageList.add(new Message("Client", "Connecting..."));
+    } else if (event == SocketClientEvent.CONNECTED) {
+      messageList.add(new Message("Client", "Connected!"));
+    }
+    renderer.render();
+  }
+
+  public static void handleMessage(Message m) {
+    stderr.printf("Recieved: " + m.sender + " :: " + m.message + "\n");
+    messageList.add(m);
+    beep();
+    Valachat.renderer.render();
   }
 
   public void processMsg(string line) {
@@ -78,7 +123,9 @@ public class Valachat : GLib.Object {
         c(args);
       }
     } else {
-      messageList.add(new Message(username, line));
+      Message m = new Message(username, line);
+      nHandler.sendMessage(m);
+      messageList.add(m);
       renderer.render();
     }
   }
@@ -89,7 +136,7 @@ public class Valachat : GLib.Object {
   }
 
 }
-private class RenderThread : GLib.Object {
+public class RenderThread : GLib.Object {
 
 
   private string name;
