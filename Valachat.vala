@@ -10,7 +10,7 @@ public class Valachat : GLib.Object {
   public static RenderThread renderer;
   private static string username = "Anon";
   public static Thread<void*> keyThread;
-
+  public static bool connected = false;
   public static ArrayList<Message> messageList;
 
   public static NetworkHandler nHandler;
@@ -87,6 +87,7 @@ public class Valachat : GLib.Object {
     stderr.printf("Created nHandler\n");
     Thread<void*> nListener = new Thread<void*>.try("nHandler", nHandler.networkListener);
     nHandler.recievedMessage.connect(handleMessage);
+    connected = true;
     messageList.add(new Message("Client", "Connected"));
     renderer.render();
 
@@ -125,9 +126,13 @@ public class Valachat : GLib.Object {
         Command c = commands.get(line.split(" ")[0].replace("/", ""));
         c(args);
       }
-    } else {
+    } else if (connected) {
       Message m = new Message(username, line);
       nHandler.sendMessage(m);
+      messageList.add(m);
+      renderer.render();
+    } else {
+      Message m = new Message("Client", "Not connected to a server! (Use /connect <address>)");
       messageList.add(m);
       renderer.render();
     }
