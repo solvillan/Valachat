@@ -1,7 +1,7 @@
 using Curses;
 using Gee;
 /**
- *
+ * The main class, contains most logic
  */
 public class Valachat : GLib.Object {
 

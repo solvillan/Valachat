@@ -1,5 +1,5 @@
 /**
- *
+ * A message container
  */
 public class Message : GLib.Object {
 
@@ -12,10 +12,7 @@ public class Message : GLib.Object {
   public string message {
     get { return _message; }
   }
-
-  /**
-   *
-   */
+  
   public Message(string sender, string message) {
     this._sender = sender;
     this._message = message;

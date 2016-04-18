@@ -1,11 +1,7 @@
 /**
- *
+ * Handles the connection to the server
  */
 public class NetworkHandler : GLib.Object {
-
-  /**
-   *
-   */
 
    private static SocketConnection conn;
    public signal void recievedMessage(Message m);
