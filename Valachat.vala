@@ -32,7 +32,7 @@ public class Valachat : GLib.Object {
     endwin();
     initscr();
     start_color();
-    init_pair(1, Color.GREEN, Color.BLACK);
+    init_pair(1, Color.GREEN, 0);
     messages = new Window (LINES - 4, COLS - 2, 1, 1);
     messages.bkgdset (COLOR_PAIR (1) | Attribute.BOLD);  // set background
     //messages.addstr ("Hello world!\n");   // write string
@@ -160,7 +160,7 @@ public class RenderThread : GLib.Object {
     }
     Valachat.messages.clrtobot();
     Valachat.messages.refresh();
-    Valachat.input.box('|', '-');
+    Valachat.input.box(0,0);
     Valachat.input.refresh();
   }
 
