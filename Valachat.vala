@@ -31,16 +31,16 @@ public class Valachat : GLib.Object {
 
     endwin();
     initscr();
-    start_color();
-    init_pair(1, Color.GREEN, 0);
+    //start_color();
+    //init_pair(1, Color.GREEN, 0);
     messages = new Window (LINES - 4, COLS - 2, 1, 1);
-    messages.bkgdset (COLOR_PAIR (1) | Attribute.BOLD);  // set background
+    //messages.bkgdset (COLOR_PAIR (1) | Attribute.BOLD);  // set background
     //messages.addstr ("Hello world!\n");   // write string
     messages.clrtobot ();               // clear to bottom (does not move cursor)
     messages.scrollok(true);
 
     input = new Window(3, COLS - 2, LINES - 3, 1);
-    input.bkgdset(COLOR_PAIR(1) | Attribute.BOLD);
+    //input.bkgdset(COLOR_PAIR(1) | Attribute.BOLD);
     input.border(' ', ' ', '-', ' ', ' ', ' ', ' ', ' ');
     Valachat.input.move(1,1);
     Valachat.input.clrtoeol();
@@ -65,7 +65,7 @@ public class Valachat : GLib.Object {
 
   private void registerCommands() {
     commands.set("nick", (args) => (Valachat.setNick(args)));
-    commands.set("connect", (args) => (Valachat.connect(args)));
+    commands.set("connect", (args) => (Valachat.doConnect(args)));
     commands.set("quit", (args) => (Valachat.exit(args)));
     commands.set("exit", (args) => (Valachat.exit(args)));
   }
@@ -79,7 +79,7 @@ public class Valachat : GLib.Object {
     username = args[0];
   }
 
-  public static void connect(string[] args) {
+  public static void doConnect(string[] args) {
     stderr.printf("Trying to connect!\n");
     messageList.add(new Message("Client", "Connecting..."));
     renderer.render();
